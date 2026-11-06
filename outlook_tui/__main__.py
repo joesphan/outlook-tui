@@ -97,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         accounts = load_accounts(args.config)
     except ValueError as exc:
-        print(f"config: {exc}", file=sys.stderr)
+        print(str(exc), file=sys.stderr)
         return 2
 
     try:
