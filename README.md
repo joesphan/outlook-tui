@@ -15,6 +15,7 @@ Verified on this machine:
 | Check | Result |
 |---|---|
 | `python tests/smoke.py` against a local mock IMAP server | **24/24 pass** |
+| `python tests/setup_test.py` (account wizard) | **14/14 pass** |
 | Handshake with `outlook.office365.com` (TLS 1.3) | works, `STATE=NONAUTH` |
 | Handshake with `imap-mail.outlook.com` | works |
 | Handshake with `imap.gmail.com` | works |
@@ -48,11 +49,25 @@ Put that client ID in the config. On first run the client prints a code and a UR
 Gmail still advertises `AUTH=PLAIN`:
 
 1. <https://myaccount.google.com/apppasswords> (requires 2-Step Verification)
-2. Create an app password, put it in the config
+2. Create one — the wizard asks for it when you add the account
 
-## Config
+## Adding an account
 
-Copy `config.example.json` to `%LOCALAPPDATA%\outlook-tui\config.json` (or `./config.json`, or point `--config` at it, or set `OUTLOOK_TUI_CONFIG`).
+Nothing needs to be configured by hand. The wizard runs from inside the client:
+
+- **first launch with no accounts** — it starts automatically
+- **`python -m outlook_tui --setup`** — any time
+- **press `a`** in the message list — adds an account, then reopens the new one
+
+It asks for the address, works out the provider from the domain, and prompts only for what that provider needs:
+
+| Address | Asked for |
+|---|---|
+| `@outlook.com`, `@hotmail.com`, `@live.com` | application (client) ID, once |
+| `@gmail.com`, `@googlemail.com` | Google app password |
+| anything else | IMAP host, port, password |
+
+Accounts are stored at `%LOCALAPPDATA%\outlook-tui\config.json`. Editing it by hand still works if you prefer:
 
 ```json
 {
@@ -63,14 +78,7 @@ Copy `config.example.json` to `%LOCALAPPDATA%\outlook-tui\config.json` (or `./co
       "host": "outlook.office365.com",
       "user": "you@outlook.com",
       "client_id": "00000000-0000-0000-0000-000000000000",
-      "tenant": "common"
-    },
-    {
-      "name": "gmail",
-      "provider": "google",
-      "host": "imap.gmail.com",
-      "user": "you@gmail.com",
-      "app_password": "abcd efgh ijkl mnop"
+      "tenant": "consumers"
     }
   ]
 }
@@ -82,6 +90,7 @@ Copy `config.example.json` to `%LOCALAPPDATA%\outlook-tui\config.json` (or `./co
 
 ```bash
 python -m outlook_tui                       # first account, interactive
+python -m outlook_tui --setup               # add another account
 python -m outlook_tui --account gmail       # pick by name or address
 python -m outlook_tui --once                # render one screen, exit (scriptable)
 python -m outlook_tui --mock --once         # canned mailbox, no credentials, no network
@@ -97,6 +106,7 @@ python -m outlook_tui --no-browser          # cached token only, never prompt
 | `Esc` | back to list |
 | `Tab` / `→` | next folder |
 | `r` | reload folder |
+| `a` | add an account |
 | `q` | quit |
 
 ## Design notes

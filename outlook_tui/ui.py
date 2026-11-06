@@ -54,6 +54,7 @@ class State:
         self.mode = "list"
         self.body = ""
         self.status = ""
+        self.pending: str | None = None
 
     @property
     def folder(self) -> str:
@@ -73,7 +74,7 @@ def render(state: State, width: int, height: int) -> list[str]:
     right_title = f" {state.folder}  ({len(state.messages)})"
 
     title = f" Outlook TUI  ·  {state.account_name}"
-    hint = "q quit   j/k move   enter open   tab folder   r reload"
+    hint = "q quit  j/k move  enter open  tab folder  r reload  a add"
     head = _pad(title, width - len(hint)) + hint
     rule = "─" * width
 
@@ -209,6 +210,8 @@ def handle_key(state: State, session, key: str) -> bool:
         _load_folder(session, state)
     elif key == "r":
         _load_folder(session, state)
+    elif key == "a":
+        state.pending = "setup"
     return True
 
 
@@ -226,6 +229,8 @@ def run(session, account_name: str) -> int:
             _draw(render(state, width, height), height)
             if not handle_key(state, session, _read_key()):
                 break
+            if state.pending == "setup":
+                return 2
     finally:
         sys.stdout.write(ESC + "[?25h" + ESC + "[2J" + ESC + "[H")
         sys.stdout.flush()
